@@ -1,31 +1,29 @@
 module SpreeUsn
   module Generators
     class InstallGenerator < Rails::Generators::Base
-
-      class_option :auto_run_migrations, :type => :boolean, :default => false
-
-      def add_javascripts
-        append_file 'vendor/assets/javascripts/spree/frontend/all.js', "//= require spree/frontend/spree_usn\n"
-        append_file 'vendor/assets/javascripts/spree/backend/all.js', "//= require spree/backend/spree_usn\n"
-      end
-
-      def add_stylesheets
-        inject_into_file 'vendor/assets/stylesheets/spree/frontend/all.css', " *= require spree/frontend/spree_usn\n", :before => /\*\//, :verbose => true
-        inject_into_file 'vendor/assets/stylesheets/spree/backend/all.css', " *= require spree/backend/spree_usn\n", :before => /\*\//, :verbose => true
-      end
+      class_option :auto_run_migrations, type: :boolean, default: false
 
       def add_migrations
         run 'bundle exec rake railties:install:migrations FROM=spree_usn'
       end
 
       def run_migrations
-        run_migrations = options[:auto_run_migrations] || ['', 'y', 'Y'].include?(ask 'Would you like to run the migrations now? [Y/n]')
-        if run_migrations
-          run 'bundle exec rake db:migrate'
-        else
-          puts 'Skipping rake db:migrate, don\'t forget to run it!'
-        end
+         if running_migrations?
+           run 'bundle exec rake db:migrate'
+         else
+           puts "Skiping rake db:migrate, don't forget to run it!"
+         end
+      end
+
+      private
+
+      def running_migrations?
+         options.auto_run_migrations? || begin
+           response = ask 'Would you like to run the migrations now? [Y/n]'
+           ['', 'y'].include? response.downcase
+         end
       end
     end
   end
 end
+
